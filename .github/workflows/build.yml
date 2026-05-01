@@ -1,23 +1,22 @@
 name: Build
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    types: [opened, synchronize, reopened]
+  workflow_dispatch: {}
 jobs:
   build:
-    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4
-        with:
-          java-version: '25'
-          distribution: 'temurin'
-          cache: 'maven'
+          java-version: 21
+          distribution: temurin
+      - name: Set branch
+        run: sed -i 's/<project.branch><\/project.branch>/<project.branch>master<\/project.branch>/' pom.xml
       - name: Build
-        run: mvn -B verify
+        run: mvn package --file pom.xml -Dproject.branch=coreprotect
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: CoreProtect
+          path: target/CoreProtect-*.jar
+          exclude-hidden-files: true
